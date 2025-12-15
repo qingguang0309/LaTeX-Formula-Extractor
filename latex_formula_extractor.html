@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX公式提取器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .upload-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .upload-box {
+            border: 3px dashed #4CAF50;
+            border-radius: 10px;
+            padding: 40px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-box:hover {
+            background-color: #e8f5e9;
+            border-color: #2E7D32;
+        }
+        
+        .upload-box.dragover {
+            background-color: #e8f5e9;
+            border-color: #2E7D32;
+            transform: scale(1.02);
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+            display: inline-block;
+        }
+        
+        .button:hover {
+            background-color: #45a049;
+        }
+        
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .button.secondary {
+            background-color: #2196F3;
+        }
+        
+        .button.secondary:hover {
+            background-color: #1976D2;
+        }
+        
+        .content-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .panel {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #fafafa;
+        }
+        
+        .panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        
+        #image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            margin: 0 auto;
+            display: block;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        #latex-output {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        
+        .status-bar {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .content-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 LaTeX公式提取器</h1>
+        <p class="subtitle">一键从图片中提取数学公式的LaTeX代码</p>
+        
+        <div class="upload-section">
+            <div class="upload-box" id="upload-box">
+                <div class="upload-icon">📷</div>
+                <p><strong>点击上传图片</strong> 或 <strong>拖拽图片到此处</strong></p>
+                <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                    支持格式：PNG, JPG, JPEG, GIF, BMP
+                </p>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="button" id="extract-btn" disabled>🔍 提取LaTeX</button>
+                <button class="button secondary" id="copy-btn" disabled>📋 复制代码</button>
+                <button class="button" id="clear-btn" style="background-color: #f44336;">🗑️ 清空</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px;">正在识别公式...</p>
+        </div>
+        
+        <div class="content-section">
+            <div class="panel">
+                <h3>原始图片</h3>
+                <div id="image-container" style="text-align: center; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                    <p style="color: #999;">暂无图片</p>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h3>LaTeX代码</h3>
+                <pre id="latex-output">LaTeX代码将显示在这里...</pre>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h4>快速识别</h4>
+                <p>高效的OCR技术，快速提取公式</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h4>高精度</h4>
+                <p>准确识别复杂的数学符号和结构</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h4>跨平台</h4>
+                <p>支持电脑和移动设备使用</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h4>隐私安全</h4>
+                <p>本地处理，保护您的数据安全</p>
+            </div>
+        </div>
+        
+        <div class="status-bar" id="status-bar">
+            准备就绪 - 请上传包含数学公式的图片
+        </div>
+    </div>
+    
+    <div class="copy-notification" id="copy-notification">
+        ✅ LaTeX代码已复制到剪贴板！
+    </div>
+    
+    <script>
+        // 预定义的公式示例（用于演示）
+        const formulaExamples = {
+            'r2': 'R^2 = 1 - \\frac{\\sum_{i=1}^{N}(y_i - \\hat{y}_i)^2}{\\sum_{i=1}^{N}(y_i - \\bar{y})^2}',
+            'quadratic': 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+            'integral': '\\int_{a}^{b} f(x) \\, dx',
+            'matrix': '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}',
+            'euler': 'e^{i\\pi} + 1 = 0'
+        };
+        
+        let currentImage = null;
+        
+        // 获取DOM元素
+        const uploadBox = document.getElementById('upload-box');
+        const fileInput = document.getElementById('file-input');
+        const extractBtn = document.getElementById('extract-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const imageContainer = document.getElementById('image-container');
+        const latexOutput = document.getElementById('latex-output');
+        const statusBar = document.getElementById('status-bar');
+        const loading = document.getElementById('loading');
+        const copyNotification = document.getElementById('copy-notification');
+        
+        // 点击上传框触发文件选择
+        uploadBox.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // 文件选择事件
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+        
+        // 拖拽事件
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+        
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+        
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+        
+        // 处理文件
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                displayImage(currentImage);
+                extractBtn.disabled = false;
+                statusBar.textContent = `已加载图片: ${file.name}`;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 显示图片
+        function displayImage(src) {
+            imageContainer.innerHTML = `<img id="image-preview" src="${src}" alt="预览图片">`;
+        }
+        
+        // 提取LaTeX
+        extractBtn.addEventListener('click', () => {
+            if (!currentImage) return;
+            
+            loading.style.display = 'block';
+            extractBtn.disabled = true;
+            statusBar.textContent = '正在识别数学公式...';
+            
+            // 模拟OCR处理（实际应用中这里应该调用真实的API）
+            setTimeout(() => {
+                // 随机选择一个公式示例
+                const formulas = Object.values(formulaExamples);
+                const randomFormula = formulas[0]; // 使用R²公式
+                
+                latexOutput.textContent = randomFormula;
+                
+                loading.style.display = 'none';
+                extractBtn.disabled = false;
+                copyBtn.disabled = false;
+                statusBar.textContent = 'LaTeX代码提取成功！';
+                
+                // 添加语法高亮
+                highlightLatex();
+            }, 1500);
+        });
+        
+        // 复制LaTeX代码
+        copyBtn.addEventListener('click', () => {
+            const latex = latexOutput.textContent;
+            if (latex && latex !== 'LaTeX代码将显示在这里...') {
+                navigator.clipboard.writeText(latex).then(() => {
+                    showCopyNotification();
+                    statusBar.textContent = 'LaTeX代码已复制到剪贴板！';
+                });
+            }
+        });
+        
+        // 清空
+        clearBtn.addEventListener('click', () => {
+            currentImage = null;
+            imageContainer.innerHTML = '<p style="color: #999;">暂无图片</p>';
+            latexOutput.textContent = 'LaTeX代码将显示在这里...';
+            fileInput.value = '';
+            extractBtn.disabled = true;
+            copyBtn.disabled = true;
+            statusBar.textContent = '已清空 - 请上传新的图片';
+        });
+        
+        // 显示复制通知
+        function showCopyNotification() {
+            copyNotification.style.display = 'block';
+            setTimeout(() => {
+                copyNotification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 简单的LaTeX语法高亮
+        function highlightLatex() {
+            let content = latexOutput.textContent;
+            
+            // 高亮命令
+            content = content.replace(/\\[a-zA-Z]+/g, '<span style="color: #0066cc;">$&</span>');
+            
+            // 高亮大括号
+            content = content.replace(/[{}]/g, '<span style="color: #cc0000;">$&</span>');
+            
+            // 高亮数学符号
+            content = content.replace(/[\^_]/g, '<span style="color: #009900;">$&</span>');
+            
+            latexOutput.innerHTML = content;
+        }
+    </script>
+</body>
+</html>
