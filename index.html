@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片一键提取 LaTeX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- KaTeX：去掉 integrity，避免 SRI 不匹配导致“未加载” -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="/static/app.js"></script>
+    <style>
+      .drop-hover {
+        outline: 3px dashed rgb(59 130 246);
+        outline-offset: 6px;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900">
+    <div class="mx-auto max-w-5xl px-4 py-10">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight">图片一键提取 LaTeX</h1>
+          <p class="mt-1 text-sm text-slate-600">
+            上传/拖拽公式图片，点击一次提取 LaTeX，并可复制与预览。
+          </p>
+        </div>
+        <a
+          class="text-sm text-blue-700 hover:text-blue-900"
+          href="https://dashscope.console.aliyun.com/"
+          target="_blank"
+          rel="noreferrer"
+          >配置 DashScope Key</a
+        >
+      </div>
+
+      <div class="mt-8 grid gap-6 lg:grid-cols-2">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-medium">1) 选择图片</div>
+            <div class="flex items-center gap-2">
+              <button
+                id="pasteBtn"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                type="button"
+              >
+                从剪贴板获取
+              </button>
+              <label
+                class="cursor-pointer rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+              >
+                选择文件
+                <input id="fileInput" type="file" accept="image/*" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <div
+            id="dropZone"
+            class="mt-4 flex h-64 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-center"
+          >
+            <div class="text-sm text-slate-700">拖拽图片到这里</div>
+            <div class="mt-1 text-xs text-slate-500">支持 PNG / JPG / WEBP，最大 10MB；也支持直接 Ctrl/⌘+V 粘贴</div>
+            <img id="preview" alt="preview" class="mt-4 hidden max-h-44 rounded-lg border border-slate-200" />
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              id="extractBtn"
+              class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              disabled
+            >
+              一键提取
+            </button>
+            <button
+              id="clearBtn"
+              class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+              disabled
+            >
+              清空
+            </button>
+            <div id="status" class="text-sm text-slate-600"></div>
+          </div>
+
+          <div id="errorBox" class="mt-4 hidden rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-medium">2) LaTeX 结果</div>
+            <div class="flex items-center gap-2">
+              <label class="flex cursor-pointer select-none items-center gap-2 text-xs text-slate-700">
+                <input id="displayMode" type="checkbox" class="h-4 w-4" checked />
+                展示模式
+              </label>
+              <button
+                id="copyBtn"
+                class="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                disabled
+              >
+                复制
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-4">
+            <div>
+              <div class="text-xs font-medium text-slate-500">源码</div>
+              <pre id="latexBox" class="mt-2 min-h-24 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900"></pre>
+            </div>
+            <div>
+              <div class="text-xs font-medium text-slate-500">预览</div>
+              <div id="renderBox" class="mt-2 min-h-24 rounded-xl border border-slate-200 bg-white p-3"></div>
+              <div class="mt-2 text-xs text-slate-500">
+                预览仅用于直观检查；若你要在论文/Markdown 中使用，请复制上面的 LaTeX 源码。
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 text-xs text-slate-500">
+        小技巧：尽量裁剪到只有公式的区域，识别会更准；如果图片中有多行公式，结果会用换行分隔。
+      </div>
+    </div>
+  </body>
+</html>
+
+
