@@ -1,4 +1,4 @@
-# LaTeX Extractor（图片一键提取 LaTeX）
+# LaTeX Formula Extractor（图片一键提取 LaTeX）
 
 一个本地运行的网页：上传/拖拽/粘贴公式截图或拍照图片，点击一次即可提取 **LaTeX**，并支持 **复制** 与 **KaTeX 实时预览**。
 
