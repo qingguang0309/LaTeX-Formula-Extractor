@@ -153,4 +153,13 @@ export OPENAI_API_KEY="你的key"
 
 MIT License
 
+## 📮 联系方式
+
+如有问题或建议，欢迎通过以下方式联系：
+- 提交 [Issue](https://github.com/qingguang0309/LaTeX-Formula-Extractor/issues)
+- 发送邮件至：qingguang0309@163.com
+
+---
+
+**Star ⭐ 本项目如果你觉得有用！**
 
